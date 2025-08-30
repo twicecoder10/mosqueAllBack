@@ -60,7 +60,9 @@ app.get('/health', (req, res) => {
     success: true,
     message: 'Islamic Association Event Management API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   });
 });
 
@@ -82,8 +84,13 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Connect to Redis
-    await connectRedis();
+    // Connect to Redis (optional for health check)
+    try {
+      await connectRedis();
+      console.log('✅ Redis connected successfully');
+    } catch (redisError) {
+      console.warn('⚠️ Redis connection failed, continuing without Redis:', redisError.message);
+    }
     
     app.listen(PORT, () => {
       console.log(`🚀 Islamic Association Event Management API running on port ${PORT}`);
