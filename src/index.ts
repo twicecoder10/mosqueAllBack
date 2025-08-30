@@ -89,7 +89,8 @@ const startServer = async () => {
       await connectRedis();
       console.log('✅ Redis connected successfully');
     } catch (redisError) {
-      console.warn('⚠️ Redis connection failed, continuing without Redis:', redisError.message);
+      const errorMessage = redisError instanceof Error ? redisError.message : 'Unknown error';
+      console.warn('⚠️ Redis connection failed, continuing without Redis:', errorMessage);
     }
     
     app.listen(PORT, () => {
