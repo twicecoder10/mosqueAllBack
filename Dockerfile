@@ -1,8 +1,8 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine
+# Use Node.js 18 slim as base image (more compatible with Prisma)
+FROM node:18-slim
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks and OpenSSL for Prisma
+RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
