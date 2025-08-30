@@ -35,3 +35,5 @@ build
 uploads
 prisma/dev.db
 prisma/dev.db-journal
+prisma/*.db
+prisma/*.db-journal

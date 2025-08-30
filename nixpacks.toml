@@ -5,7 +5,7 @@ nixPkgs = ["nodejs", "postgresql", "redis"]
 cmds = ["npm ci --only=production"]
 
 [phases.build]
-cmds = ["npm run build", "npx prisma generate"]
+cmds = ["npm run build"]
 
 [start]
 cmd = "npm start"
