@@ -1,22 +1,29 @@
 import twilio from 'twilio';
 
-// Only initialize Twilio client if not in development mode
-const client = process.env.NODE_ENV !== 'development' ? twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-) : null;
+// Only initialize Twilio client if credentials are properly set
+let client: any = null;
+
+if (process.env.NODE_ENV !== 'development' && 
+    process.env.TWILIO_ACCOUNT_SID && 
+    process.env.TWILIO_AUTH_TOKEN &&
+    process.env.TWILIO_ACCOUNT_SID.startsWith('AC')) {
+  client = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
+}
 
 export const sendSMS = async (to: string, message: string) => {
-  // In development mode, just log the SMS instead of sending
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📱 [DEV MODE] SMS would be sent to:', to);
-    console.log('📱 [DEV MODE] Message:', message);
-    console.log('📱 [DEV MODE] Hardcoded OTP: 123456');
-    return { sid: 'dev-mode-sms-id' };
+  // Use hardcoded mode if in development or Twilio client is not available
+  if (process.env.NODE_ENV === 'development' || !client) {
+    console.log('📱 [HARDCODED MODE] SMS would be sent to:', to);
+    console.log('📱 [HARDCODED MODE] Message:', message);
+    console.log('📱 [HARDCODED MODE] Hardcoded OTP: 123456');
+    return { sid: 'hardcoded-sms-id' };
   }
 
   try {
-    const result = await client!.messages.create({
+    const result = await client.messages.create({
       body: message,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: to
@@ -33,11 +40,11 @@ export const sendSMS = async (to: string, message: string) => {
 export const sendOTPSMS = async (phone: string, otp: string) => {
   const message = `Your Islamic Association verification code is: ${otp}. Valid for 5 minutes.`;
   
-  if (process.env.NODE_ENV === 'development') {
-    console.log('📱 [DEV MODE] OTP SMS would be sent to:', phone);
-    console.log('📱 [DEV MODE] OTP Code: 123456 (hardcoded for development)');
-    console.log('📱 [DEV MODE] Full message:', message);
-    return { sid: 'dev-mode-otp-sms-id' };
+  if (process.env.NODE_ENV === 'development' || !client) {
+    console.log('📱 [HARDCODED MODE] OTP SMS would be sent to:', phone);
+    console.log('📱 [HARDCODED MODE] OTP Code: 123456 (hardcoded for production)');
+    console.log('📱 [HARDCODED MODE] Full message:', message);
+    return { sid: 'hardcoded-otp-sms-id' };
   }
   
   return sendSMS(phone, message);
