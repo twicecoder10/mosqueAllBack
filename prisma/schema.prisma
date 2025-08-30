@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique // Made optional
+  phone         String?   @unique
+  firstName     String
+  lastName      String
+  gender        String    // Required gender field
+  role          String    @default("USER")
+  isVerified    Boolean   @default(false)
+  profileImage  String?
+  password      String?   // Null for OTP-only users
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  createdEvents     Event[]
+  eventRegistrations EventRegistration[]
+  attendances       Attendance[]
+  sentInvitations   Invitation[] @relation("InvitedBy")
+
+  @@map("users")
+}
+
+model Event {
+  id                    String           @id @default(cuid())
+  title                 String
+  description           String
+  startDate             DateTime
+  endDate               DateTime
+  location              String
+  maxAttendees          Int?
+  currentAttendees      Int              @default(0)
+  isActive              Boolean          @default(true)
+  category              String
+  imageUrl              String?
+  registrationRequired  Boolean          @default(false)
+  registrationDeadline  DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  // Relations
+  createdBy             User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById           String
+  registrations         EventRegistration[]
+  attendances           Attendance[]
+  qrCodes              QRCode[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id               String                @id @default(cuid())
+  eventId          String
+  userId           String
+  registrationDate DateTime              @default(now())
+  status           String                @default("CONFIRMED")
+
+  // Relations
+  event            Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_registrations")
+}
+
+model Attendance {
+  id           String           @id @default(cuid())
+  eventId      String
+  userId       String
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  status       String @default("REGISTERED")
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  event        Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("attendance")
+}
+
+model Invitation {
+  id          String        @id @default(cuid())
+  email       String?       // Made optional
+  phone       String?       // Made optional
+  role        String
+  token       String        @unique
+  invitedBy   String
+  invitedAt   DateTime      @default(now())
+  expiresAt   DateTime
+  isAccepted  Boolean       @default(false)
+  acceptedAt  DateTime?
+
+  // Relations
+  invitedByUser User        @relation("InvitedBy", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  eventId   String
+  qrData    String   @unique
+  type      String   @default("secure") // basic, secure
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relations
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("qr_codes")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}
+
+// Note: Using String types instead of enums for SQLite compatibility
